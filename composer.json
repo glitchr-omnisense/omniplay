@@ -1,0 +1,52 @@
+{
+    "name": "omnisense/omniplay",
+    "type": "library",
+    "description": "Omniplay: online play for games on the platform side, under any PHP host and whatever the game's engine or netcode - a fleet of game servers kept by their heartbeats, a player seated on a fitting server with a short-lived signed ticket the server checks by itself, hosting providers that start and stop servers, behind contracts by capability. Providers are packages of their own (omniplay/docker); the ticket's format and its vectors are documented for a server in any language to check.",
+    "keywords": ["game", "games", "multiplayer", "game-server", "matchmaking", "ticket", "hmac", "fleet", "framework-agnostic", "omniplay"],
+    "homepage": "https://github.com/glitchr-omnisense/omniplay",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marco Meyer",
+            "email": "marco.meyer@glitchr.io"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "symfony/http-client-contracts": "^3.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0",
+        "symfony/http-client": "^6.4|^7.0|^8.0"
+    },
+    "suggest": {
+        "omniplay/docker": "Docker: game-server containers started and stopped through the Docker Engine API (a unix socket or TCP)",
+        "omnisense/omnibridge": "The host contracts; omnibridge/symfony and omnibridge/laravel wire omniplay into their host when a site needs it"
+    },
+    "autoload": {
+        "psr-4": {
+            "Omniplay\\": ""
+        },
+        "exclude-from-classmap": [
+            "/Tests/",
+            "/docker/",
+            "/bin/"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Omniplay\\Tests\\": "Tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-1.x": "1.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

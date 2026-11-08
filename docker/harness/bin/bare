@@ -1,0 +1,63 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * Omniplay in plain PHP: no bundle, no container, no framework. A registry
+ * of one hosting provider that starts nothing; a fleet in memory with one
+ * server registered by hand; a player seated on it, another on a server
+ * started for them; the tickets checked as a server checks them; then a
+ * provider's JSON call answered with no network. Prints what happened and
+ * every class and file PHP loaded, as JSON.
+ */
+
+use Omniplay\Exception\ProviderException;
+use Omniplay\Fleet;
+use Omniplay\Http\JsonClient;
+use Omniplay\Model\SeatRequest;
+use Omniplay\Model\Server;
+use Omniplay\Model\Service;
+use Omniplay\Registry;
+use Omniplay\Seating;
+use Omniplay\Secret\FixedSecrets;
+use Omniplay\Storage\InMemoryStore;
+use Omniplay\Testing\FixedHostingFactory;
+use Omniplay\Testing\RecordedHttpClient;
+use Omniplay\Ticket\TicketSigner;
+use Omniplay\Tickets;
+
+require getenv('OMNIPLAY_AUTOLOAD') ?: '/harness/vendor/autoload.php';
+
+$secrets = new FixedSecrets(['GAME_SECRET' => 'not-a-real-secret']);
+$registry = new Registry([new FixedHostingFactory()], ['local' => ['factory' => 'fixed', 'options' => ['services' => ['game'], 'regions' => ['eu']]]]);
+$service = new Service('game', secret: 'GAME_SECRET', ttl: 60, capacity: 2, engine: 'custom');
+$fleet = new Fleet(new InMemoryStore());
+$fleet->register(new Server('eu-1', 'game', '203.0.113.7:7777', 2, region: 'eu', engine: 'custom'));
+$fleet->heartbeat('eu-1', 1);
+$seating = new Seating($fleet, new Tickets($secrets), $registry->hosting('local'), $secrets);
+
+$first = $seating->seat($service, new SeatRequest('player-1', 'eu'));
+$second = $seating->seat($service, new SeatRequest('player-2', 'eu'));
+$report['capabilities'] = $registry->get('local')->capabilities()->toArray();
+$report['seats'] = array_map(static fn ($seat) => null === $seat ? null : [$seat->server->id, $seat->server->address, $seat->started], [$first, $second]);
+$report['checked'] = null === $second ? null : TicketSigner::verify($second->ticket->token, 'not-a-real-secret', $second->server->id)['sub'] ?? null;
+$report['refused'] = null === $second ? null : TicketSigner::verify($second->ticket->token, 'not-a-real-secret', 'eu-1');
+
+$http = RecordedHttpClient::routes([
+    '~^GET https://api\.example\.org/servers/1~' => [200, '{"id": "eu-1", "players": 3}'],
+    '~^GET https://api\.example\.org/servers/3~' => [500, '<h1>Internal error</h1>'],
+]);
+$json = new JsonClient($http, 'Example', ['User-Agent' => 'omniplay-bare/1.0']);
+$data = $json->get('https://api.example.org/servers/1', ['token' => 'not-a-real-token']);
+$report['json'] = [$data?->string('id'), $data?->int('players'), $http->header('User-Agent')];
+$report['json-404'] = $json->get('https://api.example.org/servers/2');
+try {
+    $json->get('https://api.example.org/servers/3', ['token' => 'not-a-real-token']);
+} catch (ProviderException $e) {
+    $report['json-error'] = $e->getMessage();
+}
+
+echo json_encode($report + ['loaded' => [
+    'symbols' => [...get_declared_classes(), ...get_declared_interfaces(), ...get_declared_traits()],
+    'files' => array_map('realpath', get_included_files()),
+    'eager' => array_map('realpath', array_values(is_file($f = dirname((string) (new ReflectionClass(Composer\Autoload\ClassLoader::class))->getFileName()).'/autoload_files.php') ? require $f : [])),
+]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), "\n";

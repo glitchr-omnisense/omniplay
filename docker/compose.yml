@@ -1,0 +1,32 @@
+# omnisense/omniplay with every omniplay provider:
+#
+#   docker compose run --rm omniplay test       # every package's tests (recorded answers, no network, no Docker Engine)
+#   docker compose run --rm omniplay bare       # plain PHP: a fleet, two seats, their tickets checked - and what PHP loaded
+#   docker compose run --rm omniplay phpstan    # PHPStan, each package at the highest level
+#   docker compose down -v                      # the harness's volume gone
+#
+# Providers come from GitHub (branch 1.x) unless their checkout sits under OMNIPLAY_PLUGINS (set it
+# to ../.. in .env when this core sits in the workspace beside them): then that checkout is what runs.
+# OMNIBASE_CORE, when set in .env to an omnibase checkout, is mounted for the parity test of the tickets
+# (Tests/OmnibaseParityTest.php); without it that test is skipped.
+name: omniplay-harness
+
+services:
+  omniplay:
+    build: .
+    image: omnisense/omniplay-harness
+    # One service, no server beside it: Docker's default bridge, no network of its own to create.
+    network_mode: bridge
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OMNIBASE_TICKET_SIGNER: /omnibase/src/Service/Ticket/TicketSigner.php
+    volumes:
+      - ..:/omniplay/core
+      - ${OMNIPLAY_PLUGINS:-./plugins}:/omniplay/plugins:ro
+      - ${OMNIBASE_CORE:-./omnibase}:/omnibase:ro
+      - harness:/harness
+
+volumes:
+  harness:
