@@ -5,7 +5,7 @@ order: 80
 
 # Writing a provider
 
-A provider on the platform starts and stops servers. It is a package `omniplay/<name>`,
+A provider on the platform starts and stops servers, or verifies players for a platform. It is a package `omniplay/<name>`,
 namespace `Omniplay\<Name>\`, requiring `omnisense/omniplay` (and `symfony/http-client` when it
 calls an API), written as omnigame's are:
 
@@ -21,7 +21,16 @@ calls an API), written as omnigame's are:
    of them (Docker's labels).
 3. **Calls** go through `Http\JsonClient`; a failure of its own wrapped as `JsonClient` does.
 4. **Tests**: recorded answers written after the API's reference (and said so), a `BareTest`, a
-   `LiveTest` in the group `live`. Then a line in `docker/harness/plugins.php`.
+   `LiveTest` in the group `live` when there is an account to run it with. Then a line in
+   `docker/harness/plugins.php`.
+
+A provider of player identity (omniplay/steam) implements `ProviderInterface` and
+`IdentityInterface` instead: `capabilities()` says `identity: true`, `platform()` names the
+platform, `verify()` answers an `Identity` or throws an `IdentityRefusedException` that quotes the
+platform's reason - never null, never a guessed id. The platform's key is an option holding its
+reference, read through a `SecretsInterface` at each call (the factory takes one, the environment
+by default), so that the key is in no option, no exception and nothing returned. See
+[Player identity](identity.md).
 
 The providers that run inside the game server (omniplay/dotnet, /mirror, /netcode, /godot,
 /node) implement no PHP contract: they verify tickets as [Tickets](tickets.md) says, send heartbeats

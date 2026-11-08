@@ -24,6 +24,8 @@
     },
     "suggest": {
         "omniplay/docker": "Docker: game-server containers started and stopped through the Docker Engine API (a unix socket or TCP)",
+        "omniplay/edgegap": "Edgegap: game servers deployed near the players through Edgegap's REST API, stopped by their request id",
+        "omniplay/steam": "Steam: a player's session ticket verified through the Steamworks Web API, answering their SteamID (the identity capability)",
         "omnisense/omnibridge": "The host contracts; omnibridge/symfony and omnibridge/laravel wire omniplay into their host when a site needs it"
     },
     "autoload": {

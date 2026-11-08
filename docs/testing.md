@@ -8,6 +8,9 @@ order: 70
 - `Omniplay\Testing\FixedHosting` (factory `fixed`): a hosting provider that starts nothing. The
   n-th server is `<service>-n` at `host:(port + n)`, Starting; `$started`, `$stopped` and
   `$secrets` (the secret each was handed) are public for a test to read.
+- `Omniplay\Testing\FixedIdentity` (factory `fixed-identity`, options `players`, the player's id by
+  proof, and `platform`): a platform that vouches for the players it was given and refuses any
+  other proof; `$asked` keeps every proof.
 - `Storage\InMemoryStore` and `Secret\FixedSecrets`.
 - A clock: `Fleet`, `Tickets` and `Heartbeats` take a `\Closure(): int`.
 - `Testing\RecordedHttpClient`: an HTTP client answering by route, keeping every request

@@ -34,12 +34,31 @@ A clock is a `\Closure(): int` giving Unix seconds.
 | `regions` | `['local']` | |
 | `host`, `port` | `127.0.0.1`, 7000 | the n-th server is `host:(port + n)` |
 
+## fixed-identity (`Omniplay\Testing\FixedIdentityFactory`)
+
+| Option | Default | |
+|---|---|---|
+| `players` | `[]` | the player's id by proof |
+| `platform` | `test` | |
+
 ## docker (`omniplay/docker`)
 
 See its README: `services` (required; by service name: `image`, `port`, `env`, `command`,
 `address`, `network`, `labels`, `host_port`, `memory`, `cpus`), `host`, `api_version`,
 `public_host`, `region`, `secret_env`, `name_prefix`, `auto_remove`, `stop_timeout`, `tls`,
 `heartbeat_url`, `user_agent`.
+
+## edgegap (`omniplay/edgegap`)
+
+See its README: `services` (required; by service name: `application`, `version`, `port`,
+`address`, `env`, `internal_port`, `cpu_units`, `memory_mib`, `require_cached_locations`, `tags`),
+`token` (the API token's reference), `regions`, `api`, `secret_env`, `name_prefix`,
+`heartbeat_url`, `wait`, `poll_interval`, `user_agent`.
+
+## steam (`omniplay/steam`)
+
+See its README: `appid` (required), `key` (the publisher Web API key's reference), `identity`,
+`refuse_banned`, `api`, `user_agent`.
 
 ## What a server is handed
 

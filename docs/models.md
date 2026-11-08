@@ -12,7 +12,8 @@ order: 20
 | `FleetInterface` | `Fleet` (over a `StoreInterface`) | `register()`, `heartbeat()` (null when unknown), `get()`, `servers()` of a service, `healthy()` ones, `available()` ones (a seat left; healthy within the ttl or starting within the startup's wait), `occupy()` (one more player, null when full, draining or down), `retireStale()` (the removed servers), `remove()` |
 | `SeatingInterface` | `Seating` | `seat(Service, SeatRequest): ?Seat` |
 | `TicketsInterface` | `Tickets` (over a `SecretsInterface`) | `mint(Service, room, claims): Ticket`, `verify(Service, token, room): ?Ticket` |
-| `HostingInterface` | providers (`omniplay/docker`, `Testing\FixedHosting`) | `start(Service, secret, region, tags): Server` (Starting, not registered), `stop(Server)`, `running(service)` |
+| `HostingInterface` | providers (`omniplay/docker`, `omniplay/edgegap`, `Testing\FixedHosting`) | `start(Service, secret, region, tags): Server` (Starting, not registered), `stop(Server)`, `running(service)` |
+| `IdentityInterface` | providers (`omniplay/steam`, `Testing\FixedIdentity`); optional | `platform()`, `verify(proof): Identity` (or an `IdentityRefusedException` saying why): [Player identity](identity.md) |
 | `ProviderInterface` | every provider | `getName()`, `getTitle()`, `capabilities()` |
 | `Storage\StoreInterface` | `InMemoryStore`, the application's own | `save()`, `find()`, `all()`, `delete()` |
 | `Secret\SecretsInterface` | `EnvironmentSecrets`, `FixedSecrets`, the application's own (a vault) | `secret(reference): string` |
@@ -22,15 +23,19 @@ order: 20
 
 ## Capabilities
 
-`Capabilities(hosting, services, regions, where)`: whether the provider starts servers, of which
-services (any when empty), in which regions (any when empty), and where it runs them for a person
-to read. `starts($service, $region)` is what `Seating` and `Registry::hostingFor()` ask.
+`Capabilities(hosting, services, regions, where, identity)`: whether the provider starts servers,
+of which services (any when empty), in which regions (any when empty), where it runs them for a
+person to read, and whether it verifies players' proofs from a platform. `starts($service,
+$region)` is what `Seating` and `Registry::hostingFor()` ask; `contracts()` lists `hosting` and
+`identity` as they hold.
 
 ## The registry
 
 `new Registry($factories, $config)`: `$config` maps a name to `['factory' => ..., 'options' =>
 [...]]`. `get()`, `has()`, `hosting($name)` (a `NotSupportedException` when the provider starts
 nothing), `hostingFor($service, $region, ...$names)` (the first that starts it there, or null),
+`identity($name)` (a `NotSupportedException` when the provider verifies no player),
+`identityFor($platform, ...$names)` (the first that verifies that platform's players, or null),
 `options()`, `names()`, `factories()`.
 
 ## Server
@@ -59,7 +64,10 @@ presented when the service has one of its own (a relay).
 
 ## Seat, Ticket, SeatRequest, HeartbeatResult
 
-- `SeatRequest($player, $region = null, $tags = [], $claims = [])`.
+- `SeatRequest($player, $region = null, $tags = [], $claims = [])`: `$player` a string, or an
+  `Identity` a platform verified (then the player's id is `Identity::player()` and `$identity`
+  keeps it).
+- `Identity($platform, $id, $claims)`: `player()` is `<platform>:<id>`.
 - `Seat($player, Server, Ticket, $started)`: `toArray()` is what the client is handed (address,
   ticket, expiry in Unix seconds, server, service, region, engine, started).
 - `Ticket($token, $room, $expires, $claims)`: the claims without `room` and `exp`.

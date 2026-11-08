@@ -47,7 +47,9 @@ store is the application's.
 
 ## Providers
 
-On the platform, omniplay/docker starts and stops servers as containers. Inside the game server -
+On the platform, omniplay/docker starts and stops servers as containers, omniplay/edgegap as
+Edgegap deployments near the players; omniplay/steam verifies a player's Steam session ticket
+([Player identity](identity.md), optional). Inside the game server -
 not PHP - omniplay/dotnet (any .NET, Unity included), omniplay/mirror and omniplay/netcode (Unity's
 two netcodes, over omniplay/dotnet), omniplay/godot (GDScript) and omniplay/node verify the tickets
 and send the heartbeats. They call omniplay; omniplay never calls them, and each is checked against
@@ -61,6 +63,7 @@ written in anything else.
 - [Tickets](tickets.md): the format, field by field, with its vectors.
 - [The heartbeat](heartbeat.md): the protocol between a server and the application.
 - [Seating](usage-seating.md): how a server is chosen, started, and a ticket minted.
+- [Player identity](identity.md): a player verified by a platform, seated under that id.
 - [Configuration](configuration.md): the registry's, the core classes' and the fixed provider's.
 - [Errors](errors.md).
 - [Testing](testing.md) and [the harness](harness.md).

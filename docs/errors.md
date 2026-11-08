@@ -11,8 +11,9 @@ Every exception implements `Omniplay\Exception\OmniplayException`.
 |---|---|---|
 | `InvalidArgumentException` | a value nothing can hold: an empty id, a capacity of 0, a ticket without room or expiry, claims named `room` or `exp`, a payload that is not JSON | `A ticket names its room: "room", a non-empty string.` |
 | `InvalidConfigException` | a provider not configured, a factory not installed, an option missing, a secret not found | `No "docker" factory for the "local" hosting provider; installed: fixed.`, `The "docker" provider needs: services.`, `No secret in the environment variable "GAME_TICKET_SECRET".` |
-| `NotSupportedException` | a provider asked for what it does not do | `The "other" provider (...) does not start servers.`, `Docker starts no server of the "relay" service.` |
-| `ProviderException` | the provider answered with an error, or not JSON | `Docker answered 500 for POST /v1.44/containers/<id>/start. {"message": "...port is already allocated"}` |
+| `NotSupportedException` | a provider asked for what it does not do | `The "other" provider (...) does not start servers.`, `The "local" provider (...) does not verify players.`, `Docker starts no server of the "relay" service.` |
+| `ProviderException` | the provider answered with an error, or not JSON; its code is the HTTP status | `Docker answered 500 for POST /v1.44/containers/<id>/start. {"message": "...port is already allocated"}` |
+| `IdentityRefusedException` | a platform refused a player's proof, or the proof is not one | `Steam refused the ticket: Invalid ticket (error 101).` |
 | `UnreachableException` | the provider could not be reached | `Docker could not be reached for GET /v1.44/containers/json: <the client's reason, without the address>.` |
 
 A ticket or a heartbeat that does not hold is no exception: `verify()` answers null,

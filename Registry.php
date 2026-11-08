@@ -14,6 +14,7 @@ use Omniplay\Exception\NotSupportedException;
  *   ]);
  *
  *   $registry->hosting('local')->start($service, $secret);
+ *   $registry->identityFor('steam')?->verify($ticket);
  */
 final class Registry
 {
@@ -60,6 +61,30 @@ final class Registry
         foreach ($names ?: $this->names() as $name) {
             $provider = $this->get($name);
             if ($provider instanceof HostingInterface && $provider->capabilities()->starts($service, $region)) {
+                return $provider;
+            }
+        }
+
+        return null;
+    }
+
+    public function identity(string $name): IdentityInterface
+    {
+        $provider = $this->get($name);
+
+        return $provider instanceof IdentityInterface && $provider->capabilities()->identity ? $provider : throw NotSupportedException::capability($provider, $name, 'verify players');
+    }
+
+    /**
+     * The first provider, in the configuration's order (or the order named),
+     * that verifies the players of this platform; null when none does - the
+     * application then names its players itself.
+     */
+    public function identityFor(string $platform, string ...$names): ?IdentityInterface
+    {
+        foreach ($names ?: $this->names() as $name) {
+            $provider = $this->get($name);
+            if ($provider instanceof IdentityInterface && $provider->capabilities()->identity && $provider->platform() === strtolower($platform)) {
                 return $provider;
             }
         }

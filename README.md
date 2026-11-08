@@ -41,8 +41,12 @@ application's client.
   "custom"), stored and returned; nothing branches on it.
 - **Contracts by capability**: `FleetInterface` (register, heartbeat, healthy, available, occupy,
   retire the stale), `SeatingInterface`, `TicketsInterface`, `HostingInterface` (start, stop,
-  running: implemented by providers). `Fleet`, `Seating` and `Tickets` are the core's
-  implementations; `Heartbeats` is the application's end of a server's heartbeat.
+  running: implemented by providers), `IdentityInterface` (a player's proof verified by a
+  platform: implemented by providers, required by nothing). `Fleet`, `Seating` and `Tickets` are
+  the core's implementations; `Heartbeats` is the application's end of a server's heartbeat.
+- **Player identity** (optional): a `SeatRequest` names its player by a string, or by the
+  `Model\Identity` a platform verified (`steam:76561197960287930`, the ticket's `sub`);
+  [docs/identity.md](docs/identity.md).
 - **Tickets** (`Omniplay\Ticket\TicketSigner`): `base64url(json payload) "." hex(hmac_sha256(that
   base64url, secret))`, the payload naming `room` and `exp`. [docs/tickets.md](docs/tickets.md)
   is the format for a server in any language, `Tests/vectors.json` its vectors.
@@ -51,7 +55,7 @@ application's client.
   a secret is never a field of anything stored or returned.
 - **Registry, Config, ProviderFactory** as in the other omni families; `Http\JsonClient`,
   `Http\Data`, `Http\Redaction` as in omnigame; **Testing** (`FixedHosting`,
-  `RecordedHttpClient`, `BareTestCase`).
+  `FixedIdentity`, `RecordedHttpClient`, `BareTestCase`).
 
 ## Providers
 
@@ -63,6 +67,8 @@ Omniplay requires none of them; each that reads tickets is checked against `Test
 | Package | Runs | What it does |
 |---|---|---|
 | [omniplay/docker](https://github.com/glitchr-omnisense/omniplay-docker) (Composer) | on the platform | starts and stops game servers as Docker containers (`HostingInterface`), through the Docker Engine API on a unix socket or TCP (TLS) |
+| [omniplay/edgegap](https://github.com/glitchr-omnisense/omniplay-edgegap) (Composer) | on the platform | starts and stops game servers as Edgegap deployments near the players (`HostingInterface`), through Edgegap's REST API |
+| [omniplay/steam](https://github.com/glitchr-omnisense/omniplay-steam) (Composer) | on the platform | verifies a player's Steam session ticket and answers their SteamID (`IdentityInterface`), through the Steamworks Web API; lobbies stay in the game |
 | [omniplay/dotnet](https://github.com/glitchr-omnisense/omniplay-dotnet) (NuGet `Omniplay.Dotnet`, UPM `io.omniplay.dotnet`) | inside the game server: any .NET (a .NET server, Unity, Godot's C#; netstandard2.1, no Unity) | verifies and mints tickets, sends heartbeats |
 | [omniplay/mirror](https://github.com/glitchr-omnisense/omniplay-mirror) (UPM `io.omniplay.mirror`) | inside a Unity server with Mirror | a `NetworkAuthenticator` checking the ticket at connection, the heartbeat (over omniplay/dotnet) |
 | [omniplay/netcode](https://github.com/glitchr-omnisense/omniplay-netcode) (UPM `io.omniplay.netcode`) | inside a Unity server with Netcode for GameObjects | the connection approval checking the ticket, the heartbeat (over omniplay/dotnet) |
@@ -79,6 +85,7 @@ does without them.
 - [Models and contracts](docs/models.md)
 - [Tickets: the format](docs/tickets.md) and [the heartbeat](docs/heartbeat.md)
 - [Seating, step by step](docs/usage-seating.md)
+- [Player identity](docs/identity.md)
 - [Configuration reference](docs/configuration.md)
 - [Errors](docs/errors.md)
 - [Testing](docs/testing.md) and [the harness](docs/harness.md)
@@ -88,7 +95,8 @@ does without them.
 
 ## Verified, and not
 
-- Verified (the harness, PHP 8.4, 2026-11-08): 67 tests green on the core and omniplay/docker, PHPStan at its highest level on both, the baseline empty; every ticket vector answered
+- Verified (the harness, PHP 8.4, 2026-11-08): 94 tests green on the core, omniplay/docker,
+  omniplay/edgegap and omniplay/steam, PHPStan at its highest level on each, the baseline empty; every ticket vector answered
   the same by omnibase's `Base\Service\Ticket\TicketSigner` (`OmnibaseParityTest`); `BareTest`
   (nothing loads but the package and the HTTP client contracts; omnibase's `Base\` among what may
   not).
@@ -96,12 +104,13 @@ does without them.
   live`): a container started through Docker Desktop's socket, found running, its environment
   holding the secret, stopped and removed.
 - Not verified: a game server of any engine seated end to end; a TCP or TLS engine (the requests
-  are checked, not an engine).
+  are checked, not an engine); Edgegap and Steam live (no account: their requests are checked
+  against answers written after their API references).
 
 ## Responsibility
 
 `omnisense/omniplay` and its providers are independent clients of the services they reach (a
-Docker Engine, a cloud's API), affiliated with none. The MIT licence covers this code only. Whoever
+Docker Engine, a cloud's API, a platform's), affiliated with none. The MIT licence covers this code only. Whoever
 runs them is responsible for the servers they start, the secrets they hand out and the players'
 data they keep. The authors publish them free of charge and accept no liability for how they are
 used (see [LICENSE](LICENSE)).

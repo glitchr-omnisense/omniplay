@@ -8,4 +8,6 @@
  */
 return [
     'docker' => ['omniplay/docker', 'omniplay-docker', 'Omniplay\\Docker\\Tests\\'],
+    'edgegap' => ['omniplay/edgegap', 'omniplay-edgegap', 'Omniplay\\Edgegap\\Tests\\'],
+    'steam' => ['omniplay/steam', 'omniplay-steam', 'Omniplay\\Steam\\Tests\\'],
 ];

@@ -5,7 +5,7 @@ namespace Omniplay;
 /**
  * What a provider is, said before it is asked anything: whether it starts
  * and stops servers, of which services, in which regions, and where it runs
- * them.
+ * them; whether it verifies players' proofs from a platform.
  */
 final readonly class Capabilities
 {
@@ -14,12 +14,14 @@ final readonly class Capabilities
      * @param list<string> $services the services it can start a server of (Service::$name); any, when empty
      * @param list<string> $regions  the regions its servers run in; any asked, when empty
      * @param ?string      $where    where it runs them, for a person to read ("Docker Engine at unix:///var/run/docker.sock")
+     * @param bool         $identity it verifies players' proofs from a platform (IdentityInterface)
      */
     public function __construct(
         public bool $hosting = false,
         public array $services = [],
         public array $regions = [],
         public ?string $where = null,
+        public bool $identity = false,
     ) {
     }
 
@@ -31,10 +33,10 @@ final readonly class Capabilities
             && (null === $region || [] === $this->regions || \in_array($region, $this->regions, true));
     }
 
-    /** @return list<string> what it can be asked, by contract: hosting */
+    /** @return list<string> what it can be asked, by contract: hosting, identity */
     public function contracts(): array
     {
-        return array_keys(array_filter(['hosting' => $this->hosting]));
+        return array_keys(array_filter(['hosting' => $this->hosting, 'identity' => $this->identity]));
     }
 
     /** @return array{contracts: list<string>, services: list<string>, regions: list<string>, where: ?string} */

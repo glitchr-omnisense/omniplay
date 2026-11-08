@@ -23,3 +23,10 @@
   (Docker's 204 and 304) as empty data.
 - `Testing\FixedHosting` and its factory, `RecordedHttpClient`, `BareTestCase`; the Docker
   harness (test, live, bare, phpstan).
+- The player identity capability, optional: `IdentityInterface` (`platform()`, `verify(proof):
+  Identity`), `Model\Identity` (platform, id, claims; `player()` is `<platform>:<id>`),
+  `Exception\IdentityRefusedException` (a refusal that says why), `Capabilities::$identity`,
+  `Registry::identity()` and `identityFor()`; a `SeatRequest` takes an `Identity` as its player.
+  `Testing\FixedIdentity` and its factory (`fixed-identity`). docs/identity.md.
+- `ProviderException::answered()` gives the HTTP status as the exception's code.
+- The harness installs omniplay/edgegap and omniplay/steam beside omniplay/docker.
