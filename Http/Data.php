@@ -5,7 +5,7 @@ namespace Omniplay\Http;
 /**
  * A decoded JSON answer, read by key without trusting its shape: each
  * reader gives its type or null (an empty list), whatever the provider sent.
- * A key may be a path: "NetworkSettings.Ports", "State.Status".
+ * A key may be a path: "release_date.date", "NetworkSettings.Ports".
  */
 final readonly class Data
 {

@@ -6,12 +6,12 @@ use Omniplay\Config;
 use Omniplay\ProviderFactory;
 use Omniplay\ProviderInterface;
 
-/** FixedHosting's factory: "fixed", options services, regions, host, port. */
+/** FixedHosting's factory: "fixed-hosting", options services, regions, host, port. */
 final class FixedHostingFactory extends ProviderFactory
 {
     protected function populate(Config $c): void
     {
-        $c->defaults(['omniplay.factory_name' => 'fixed', 'omniplay.factory_title' => 'Fixed hosting', 'omniplay.required_options' => [], 'services' => [], 'regions' => ['local'], 'host' => '127.0.0.1', 'port' => 7000]);
+        $c->defaults(['omniplay.factory_name' => 'fixed-hosting', 'omniplay.factory_title' => 'Fixed hosting', 'omniplay.required_options' => [], 'services' => [], 'regions' => ['local'], 'host' => '127.0.0.1', 'port' => 7000]);
     }
 
     protected function build(Config $c): ProviderInterface

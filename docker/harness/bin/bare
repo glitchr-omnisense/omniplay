@@ -3,9 +3,11 @@
 
 /*
  * Omniplay in plain PHP: no bundle, no container, no framework. A registry
- * of one hosting provider that starts nothing; a fleet in memory with one
- * server registered by hand; a player seated on it, another on a server
- * started for them; the tickets checked as a server checks them; then a
+ * of one store answering from games and a library it holds, and of one
+ * hosting provider that starts nothing; a search, a game found by its GOG
+ * number, a player's library and ownership; a fleet in memory with one
+ * server registered by hand, a player seated on it, another on a server
+ * started for them, the tickets checked as a server checks them; then a
  * provider's JSON call answered with no network. Prints what happened and
  * every class and file PHP loaded, as JSON.
  */
@@ -13,6 +15,13 @@
 use Omniplay\Exception\ProviderException;
 use Omniplay\Fleet;
 use Omniplay\Http\JsonClient;
+use Omniplay\Model\Game;
+use Omniplay\Model\GameRef;
+use Omniplay\Model\Identifiers;
+use Omniplay\Model\OwnedGame;
+use Omniplay\Model\Platform;
+use Omniplay\Model\Price;
+use Omniplay\Model\Query;
 use Omniplay\Model\SeatRequest;
 use Omniplay\Model\Server;
 use Omniplay\Model\Service;
@@ -21,37 +30,52 @@ use Omniplay\Seating;
 use Omniplay\Secret\FixedSecrets;
 use Omniplay\Storage\InMemoryStore;
 use Omniplay\Testing\FixedHostingFactory;
+use Omniplay\Testing\FixedProviderFactory;
 use Omniplay\Testing\RecordedHttpClient;
 use Omniplay\Ticket\TicketSigner;
 use Omniplay\Tickets;
 
 require getenv('OMNIPLAY_AUTOLOAD') ?: '/harness/vendor/autoload.php';
 
+$games = [
+    new Game('Portal 2', Identifiers::of(['steam' => 620, 'igdb' => 72]), 'fixed', 'https://example.org/portal-2', released: new DateTimeImmutable('2011-04-18'), developers: ['Valve'], platforms: Platform::fromLabels(['windows', 'osx', 'linux', 'PlayStation 3']), price: new Price(969, 'EUR')),
+    new Game('The Witcher: Enhanced Edition', Identifiers::of(['gog' => 1207658924]), 'fixed', price: new Price(119, 'EUR', 799, 85)),
+];
+$registry = new Registry([new FixedProviderFactory($games, ['player-1' => [new OwnedGame(Identifiers::of(['steam' => 620]), 'Portal 2', 1250)]]), new FixedHostingFactory()], [
+    'store' => ['factory' => 'fixed'],
+    'local' => ['factory' => 'fixed-hosting', 'options' => ['services' => ['game'], 'regions' => ['eu']]],
+]);
+
+$report['capabilities'] = $registry->get('store')->capabilities()->toArray();
+$report['search'] = array_map(static fn (Game $game) => $game->title, $registry->search('store')->search(new Query('portal')));
+$report['game'] = $registry->game(GameRef::gog(1207658924))?->toArray();
+$report['platforms'] = array_map(static fn (Platform $p) => $p->value, $games[0]->platforms);
+$report['library'] = array_map(static fn (OwnedGame $owned) => $owned->toArray(), $registry->library('store')->library('player-1'));
+$report['owns'] = [$registry->ownership('store')->owns('player-1', GameRef::steam(620)), $registry->ownership('store')->owns('player-1', GameRef::steam(400))];
+
 $secrets = new FixedSecrets(['GAME_SECRET' => 'not-a-real-secret']);
-$registry = new Registry([new FixedHostingFactory()], ['local' => ['factory' => 'fixed', 'options' => ['services' => ['game'], 'regions' => ['eu']]]]);
 $service = new Service('game', secret: 'GAME_SECRET', ttl: 60, capacity: 2, engine: 'custom');
 $fleet = new Fleet(new InMemoryStore());
 $fleet->register(new Server('eu-1', 'game', '203.0.113.7:7777', 2, region: 'eu', engine: 'custom'));
 $fleet->heartbeat('eu-1', 1);
-$seating = new Seating($fleet, new Tickets($secrets), $registry->hosting('local'), $secrets);
-
+$seating = new Seating($fleet, new Tickets($secrets), $registry->hostingFor('game', 'eu'), $secrets);
 $first = $seating->seat($service, new SeatRequest('player-1', 'eu'));
 $second = $seating->seat($service, new SeatRequest('player-2', 'eu'));
-$report['capabilities'] = $registry->get('local')->capabilities()->toArray();
+$report['hosting'] = $registry->get('local')->capabilities()->toArray();
 $report['seats'] = array_map(static fn ($seat) => null === $seat ? null : [$seat->server->id, $seat->server->address, $seat->started], [$first, $second]);
 $report['checked'] = null === $second ? null : TicketSigner::verify($second->ticket->token, 'not-a-real-secret', $second->server->id)['sub'] ?? null;
 $report['refused'] = null === $second ? null : TicketSigner::verify($second->ticket->token, 'not-a-real-secret', 'eu-1');
 
 $http = RecordedHttpClient::routes([
-    '~^GET https://api\.example\.org/servers/1~' => [200, '{"id": "eu-1", "players": 3}'],
-    '~^GET https://api\.example\.org/servers/3~' => [500, '<h1>Internal error</h1>'],
+    '~^GET https://api\.example\.org/games/1~' => [200, '{"name": "Portal 2", "release": {"date": "2011-04-18"}, "developers": [{"name": "Valve"}, "not an object"]}'],
+    '~^GET https://api\.example\.org/games/3~' => [500, '<h1>Internal error</h1>'],
 ]);
 $json = new JsonClient($http, 'Example', ['User-Agent' => 'omniplay-bare/1.0']);
-$data = $json->get('https://api.example.org/servers/1', ['token' => 'not-a-real-token']);
-$report['json'] = [$data?->string('id'), $data?->int('players'), $http->header('User-Agent')];
-$report['json-404'] = $json->get('https://api.example.org/servers/2');
+$data = $json->get('https://api.example.org/games/1', ['key' => 'not-a-real-key']);
+$report['json'] = [$data?->string('name'), $data?->date('release.date')?->format('Y'), $data?->strings('developers', 'name'), $http->header('User-Agent')];
+$report['json-404'] = $json->get('https://api.example.org/games/2');
 try {
-    $json->get('https://api.example.org/servers/3', ['token' => 'not-a-real-token']);
+    $json->get('https://api.example.org/games/3', ['key' => 'not-a-real-key']);
 } catch (ProviderException $e) {
     $report['json-error'] = $e->getMessage();
 }

@@ -1,7 +1,9 @@
-# omnisense/omniplay with every omniplay provider:
+# omnisense/omniplay with every omniplay/* provider:
 #
 #   docker compose run --rm omniplay test       # every package's tests (recorded answers, no network, no Docker Engine)
-#   docker compose run --rm omniplay bare       # plain PHP: a fleet, two seats, their tickets checked - and what PHP loaded
+#   docker compose run --rm omniplay bare       # plain PHP: a search, a game, a library, ownership, two players seated - and what PHP loaded
+#   docker compose run --rm omniplay live       # the checks that need no key (Steam's store, GOG's catalogue, itch.io's pages), within its policies
+#   docker compose run --rm -v /var/run/docker.sock:/var/run/docker.sock omniplay live --filter Docker   # omniplay/docker against a real engine
 #   docker compose run --rm omniplay phpstan    # PHPStan, each package at the highest level
 #   docker compose down -v                      # the harness's volume gone
 #

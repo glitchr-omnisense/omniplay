@@ -31,7 +31,7 @@ final class FixedHosting implements ProviderInterface, HostingInterface
      * @param list<string> $services the services it starts (every one, when empty)
      * @param list<string> $regions
      */
-    public function __construct(private readonly array $services = [], private readonly array $regions = ['local'], private readonly string $host = '127.0.0.1', private readonly int $port = 7000, private readonly string $name = 'fixed')
+    public function __construct(private readonly array $services = [], private readonly array $regions = ['local'], private readonly string $host = '127.0.0.1', private readonly int $port = 7000, private readonly string $name = 'fixed-hosting')
     {
     }
 

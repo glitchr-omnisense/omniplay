@@ -1,8 +1,8 @@
 #!/bin/sh
 # Composes the harness (this core + every provider), installs it when it changed, then runs the
 # command: "test" for PHPUnit, "bare" for the script that uses omniplay with no framework at all,
-# "live" for the checks against a real Docker Engine (its socket mounted at /var/run/docker.sock),
-# "phpstan" for PHPStan, "composer ...", "sh" or "php" as they are.
+# "live" for the checks that need no key and those against a real Docker Engine (its socket
+# mounted at /var/run/docker.sock), "phpstan" for PHPStan, "composer ...", "sh" or "php" as they are.
 set -e
 php /omniplay/core/docker/harness/setup.php
 cd /harness

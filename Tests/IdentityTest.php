@@ -46,7 +46,7 @@ final class IdentityTest extends TestCase
     public function testTheRegistryFindsTheProviderThatVerifiesAPlatformsPlayers(): void
     {
         $registry = new Registry([new FixedHostingFactory(), new FixedIdentityFactory()], [
-            'local' => ['factory' => 'fixed'],
+            'local' => ['factory' => 'fixed-hosting'],
             'steam' => ['factory' => 'fixed-identity', 'options' => ['platform' => 'steam', 'players' => ['ticket-1' => '76561197960287930']]],
         ]);
 
@@ -55,7 +55,7 @@ final class IdentityTest extends TestCase
         self::assertNull($registry->identityFor('epic'));
         self::assertNull($registry->identityFor('steam', 'local'));
         self::assertNull($registry->hostingFor('game', null, 'steam'), 'a platform that verifies players starts no server');
-        self::assertSame(['contracts' => ['identity'], 'services' => [], 'regions' => [], 'where' => 'nowhere: 1 players, in memory'], $registry->get('steam')->capabilities()->toArray());
+        self::assertSame(['contracts' => ['identity'], 'lookupBy' => [], 'prices' => false, 'player' => null, 'attribution' => null, 'terms' => [], 'keyless' => false, 'services' => [], 'regions' => [], 'where' => 'nowhere: 1 players, in memory'], $registry->get('steam')->capabilities()->toArray());
         self::assertSame('steam:76561197960287930', $registry->identity('steam')->verify('ticket-1')->player());
 
         $this->expectException(NotSupportedException::class);

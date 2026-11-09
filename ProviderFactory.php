@@ -10,7 +10,7 @@ namespace Omniplay;
  *
  * Nothing here calls anything: a factory whose provider is reached over
  * HTTP takes its client in its own constructor - the application's, a
- * RecordedHttpClient in a test.
+ * MockHttpClient or a RecordedHttpClient in a test.
  */
 abstract class ProviderFactory implements ProviderFactoryInterface
 {

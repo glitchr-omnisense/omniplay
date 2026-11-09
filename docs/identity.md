@@ -55,7 +55,7 @@ use Omniplay\Registry;
 use Omniplay\Steam\SteamFactory;
 
 $providers = new Registry([new SteamFactory(), new DockerFactory()], [
-    'steam' => ['factory' => 'steam', 'options' => ['appid' => 480, 'key' => 'STEAM_WEB_API_KEY', 'identity' => 'omniplay']],
+    'steam' => ['factory' => 'steam', 'options' => ['appid' => 480, 'publisher_key' => 'STEAM_PUBLISHER_KEY', 'identity' => 'omniplay']],
     'local' => ['factory' => 'docker', 'options' => [/* ... */]],
 ]);
 

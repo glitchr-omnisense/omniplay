@@ -2,10 +2,10 @@
 
 namespace Omniplay;
 
-/** Builds a provider from its options (a Docker host, the services it starts...). */
+/** Builds a provider from its options (a key, a client id, a Docker host, the services it starts...). */
 interface ProviderFactoryInterface
 {
-    /** The name providers are configured with: "docker", "fixed"... */
+    /** The name providers are configured with: "steam", "igdb", "docker"... */
     public function getName(): string;
 
     /** @param array<string, mixed> $options */

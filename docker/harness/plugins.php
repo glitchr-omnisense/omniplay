@@ -1,13 +1,17 @@
 <?php
 
 /*
- * The omniplay providers the harness installs beside the core, by their
- * directory under /omniplay/plugins: their Composer name, their GitHub
- * repository, their tests' namespace, and what their tests need besides
- * (require-dev).
+ * The omniplay/* providers in PHP the harness installs beside the core: their
+ * tests' namespace, and what their tests need besides (require-dev). Those
+ * that run inside the game server (dotnet, mirror, netcode, godot, node) are
+ * not PHP and have their own tests.
  */
 return [
-    'docker' => ['omniplay/docker', 'omniplay-docker', 'Omniplay\\Docker\\Tests\\'],
-    'edgegap' => ['omniplay/edgegap', 'omniplay-edgegap', 'Omniplay\\Edgegap\\Tests\\'],
-    'steam' => ['omniplay/steam', 'omniplay-steam', 'Omniplay\\Steam\\Tests\\'],
+    'steam' => ['Omniplay\\Steam\\Tests\\'],
+    'gog' => ['Omniplay\\Gog\\Tests\\'],
+    'itch' => ['Omniplay\\Itch\\Tests\\'],
+    'igdb' => ['Omniplay\\Igdb\\Tests\\'],
+    'rawg' => ['Omniplay\\Rawg\\Tests\\'],
+    'docker' => ['Omniplay\\Docker\\Tests\\'],
+    'edgegap' => ['Omniplay\\Edgegap\\Tests\\'],
 ];

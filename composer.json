@@ -1,8 +1,8 @@
 {
     "name": "omnisense/omniplay",
     "type": "library",
-    "description": "Omniplay: online play for games on the platform side, under any PHP host and whatever the game's engine or netcode - a fleet of game servers kept by their heartbeats, a player seated on a fitting server with a short-lived signed ticket the server checks by itself, hosting providers that start and stop servers, behind contracts by capability. Providers are packages of their own (omniplay/docker); the ticket's format and its vectors are documented for a server in any language to check.",
-    "keywords": ["game", "games", "multiplayer", "game-server", "matchmaking", "ticket", "hmac", "fleet", "framework-agnostic", "omniplay"],
+    "description": "Omniplay: games under any PHP host, behind contracts by capability. On the stores: a game's record (texts, dates, studios, platforms, price, pictures, scores, identifiers on other stores), a search by title, a player's library and whether a player owns a game, read only. Online play, whatever the game's engine or netcode: a fleet of game servers kept by their heartbeats, a player seated on a fitting server with a short-lived signed ticket the server checks by itself, hosting providers that start and stop servers, a player's identity verified by their platform. Providers are packages of their own (omniplay/steam, omniplay/gog, omniplay/itch, omniplay/igdb, omniplay/rawg, omniplay/docker, omniplay/edgegap, and inside the game server omniplay/dotnet, mirror, netcode, godot and node); the ticket's format and its vectors are documented for a server in any language; the Symfony and Laravel bridges live in omnibridge.",
+    "keywords": ["game", "games", "steam", "gog", "itch", "igdb", "rawg", "store", "library", "multiplayer", "game-server", "matchmaking", "ticket", "hmac", "fleet", "framework-agnostic", "omniplay"],
     "homepage": "https://github.com/glitchr-omnisense/omniplay",
     "license": "MIT",
     "authors": [
@@ -23,9 +23,13 @@
         "symfony/http-client": "^6.4|^7.0|^8.0"
     },
     "suggest": {
+        "omniplay/steam": "Steam: the store's records and search (no key), a player's library and ownership (Web API key), a player's session ticket verified on the platform (publisher key)",
+        "omniplay/gog": "GOG: the catalogue's records and search (no key)",
+        "omniplay/itch": "itch.io: a game page's record (no key), whether a player owns one of your games (API key)",
+        "omniplay/igdb": "IGDB: the catalogue, with identifiers on the stores (Twitch client credentials)",
+        "omniplay/rawg": "RAWG: the catalogue, with the stores selling a game (API key)",
         "omniplay/docker": "Docker: game-server containers started and stopped through the Docker Engine API (a unix socket or TCP)",
         "omniplay/edgegap": "Edgegap: game servers deployed near the players through Edgegap's REST API, stopped by their request id",
-        "omniplay/steam": "Steam: a player's session ticket verified through the Steamworks Web API, answering their SteamID (the identity capability)",
         "omnisense/omnibridge": "The host contracts; omnibridge/symfony and omnibridge/laravel wire omniplay into their host when a site needs it"
     },
     "autoload": {

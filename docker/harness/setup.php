@@ -21,8 +21,9 @@ $packages = [];
 $dev = [];
 @mkdir("$out/packages", 0775, true);
 foreach ($plugins as $slug => $plugin) {
-    [$name, $repository, $testsNs, $needs] = $plugin + [3 => []];
+    [$testsNs, $needs] = $plugin + [1 => []];
     $dev += $needs;
+    $name = "omniplay/$slug";
     $dir = "$local/$slug";
     $meta = is_file("$dir/composer.json") ? json_decode((string) file_get_contents("$dir/composer.json"), true) : null;
     if (($meta['name'] ?? null) === $name) {
@@ -31,8 +32,8 @@ foreach ($plugins as $slug => $plugin) {
         $packages[$slug] = 'checkout';
     } else {
         // A plain git clone over HTTPS: no GitHub API (anonymous calls are rate limited), no ssh in the image.
-        $repositories[] = ['type' => 'git', 'url' => "https://github.com/glitchr-omnisense/$repository.git"];
-        $packageDir = "$out/vendor/$name";
+        $repositories[] = ['type' => 'git', 'url' => "https://github.com/glitchr-omnisense/omniplay-$slug.git"];
+        $packageDir = "$out/vendor/omniplay/$slug";
         $packages[$slug] = 'github';
     }
     $require[$name] = '1.x-dev';
