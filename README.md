@@ -46,9 +46,34 @@ $seat = $seating->seat($game, new SeatRequest($player, 'local', ['ranked']));
 $seat?->toArray();   // ['address' => 'play.example.org:49153', 'ticket' => 'eyJ...', 'expires' => 1800000060, ...]
 ```
 
-Plain PHP: no container, no framework. The core requires only `symfony/http-client-contracts`
-(interfaces); a provider that calls an API requires `symfony/http-client` and takes the
-application's client.
+Plain PHP: no container, no framework. The core requires `omnisense/contracts` (the kernel every
+omnisense family builds on: provider, factory, registry, JSON client, usage policies, testing kit)
+and `symfony/http-client-contracts` (interfaces), nothing else; a provider that calls an API
+requires `symfony/http-client` and takes the application's client.
+
+## Usage policies
+
+Each provider declares its usage policy as data (its `policy.json`: rate limits, rights,
+attribution, requirements, where and when it was read), and every call through `search()`,
+`catalogue()`, `library()` or `ownership()` is held to it: checked before, counted after, refused
+with `UsageLimitReachedException` once a limit is reached or while the provider asks to wait (a
+429 and its `Retry-After`, a `RateLimit` field with nothing left). `hosting()` and `identity()`
+are guarded when the policy limits one of their calls (Edgegap's deployments), the provider itself
+otherwise (a Docker Engine of one's own). A site may tighten a policy in its configuration, never
+loosen it:
+
+```php
+'igdb' => [
+    'factory' => 'igdb',
+    'options' => ['client_id' => '...', 'client_secret' => '...'],
+    'policy' => ['rateLimits' => [['max' => 2, 'window' => 'second', 'scope' => 'key']]],
+    'usage' => ['commercial' => false],
+],
+```
+
+`$registry->policy('igdb')` gives the policy as the site runs it. Pass a shared
+`RateLimiterInterface` as the registry's third argument when the application runs in many
+processes. See [docs/policies.md](docs/policies.md).
 
 ## The shape
 
@@ -136,6 +161,7 @@ The manual, in `docs/`:
 - [Tickets: the format](docs/tickets.md) and [the heartbeat](docs/heartbeat.md)
 - [Player identity](docs/identity.md)
 - [Configuration reference](docs/configuration.md)
+- [Usage policies](docs/policies.md)
 - [Errors](docs/errors.md)
 - [Testing](docs/testing.md)
 - [The harness](docs/harness.md)
@@ -167,8 +193,8 @@ See [docs/verified.md](docs/verified.md).
 
 `omnisense/omniplay` and its `omniplay/*` providers are independent, unofficial clients: none is
 affiliated with, endorsed by or sponsored by the stores, hosts and platforms it reaches. Each keeps
-its own terms (accounts and keys, rate limits, commercial use, trademarks, players' data), named in
-the README of each provider. The MIT licence covers this code only and grants no right to any
+its own terms (accounts and keys, rate limits, commercial use, trademarks, players' data), declared
+in each provider's `policy.json` and named in its README. The MIT licence covers this code only and grants no right to any
 service or to its data.
 
 Whoever installs and runs these packages is responsible for complying with those terms, for

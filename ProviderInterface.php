@@ -13,7 +13,7 @@ namespace Omniplay;
  * and what its terms ask of whoever shows its records. Nothing on a store
  * is bought, granted or written.
  */
-interface ProviderInterface
+interface ProviderInterface extends \Omnisense\Contracts\Provider\ProviderInterface
 {
     /** The factory's name: "steam", "igdb", "docker"... */
     public function getName(): string;

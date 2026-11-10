@@ -4,6 +4,8 @@ namespace Omniplay\Http;
 
 use Omniplay\Exception\ProviderException;
 use Omniplay\Exception\UnreachableException;
+use Omnisense\Contracts\Policy\Backoff;
+use Omnisense\Contracts\Policy\UsageLimitReached;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -18,12 +20,29 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * masked in its message), and neither keeps its trace's arguments, where the
  * request's query and headers stood. An empty body (Docker's 204 to a
  * container started, 304 to one already stopped) reads as an empty Data.
+ *
+ * Given the provider's Backoff (Config::backoff() in a factory's build()),
+ * it waits while the provider asked to and reads every response's
+ * Retry-After and RateLimit fields: a 429 is a UsageLimitReachedException
+ * with the wait asked (omnisense/contracts' JsonClient underneath; request()
+ * is omniplay's own, for the empty body).
  */
-final class JsonClient
+final class JsonClient extends \Omnisense\Contracts\Http\JsonClient
 {
+    private readonly HttpClientInterface $client;
+
+    /** @var array<string, string> */
+    private readonly array $sent;
+
+    private readonly ?Backoff $wait;
+
     /** @param array<string, string> $headers sent with every request */
-    public function __construct(private readonly HttpClientInterface $http, private readonly string $provider, private readonly array $headers = [])
+    public function __construct(HttpClientInterface $http, string $provider, array $headers = [], ?Backoff $backoff = null)
     {
+        parent::__construct($http, $provider, $headers, $backoff);
+        $this->client = $http;
+        $this->sent = $headers;
+        $this->wait = $backoff;
     }
 
     /**
@@ -41,51 +60,51 @@ final class JsonClient
      * @param array<string, mixed>  $options json, body or query, as Symfony's HttpClient takes them
      * @param array<string, string> $headers
      *
-     * @return ?Data null when the provider answers 404
+     * @return ?Data null when the provider answers 404, an empty Data when its body is empty
      */
     public function request(string $method, string $url, array $options = [], array $headers = []): ?Data
     {
         $what = $method.' '.(parse_url($url, \PHP_URL_PATH) ?: '/');
-        $options = ['headers' => $headers + $this->headers] + $options;
+        $options = ['headers' => $headers + $this->sent] + $options;
+        $secrets = Redaction::secrets($url, $options);
         try {
-            $response = $this->http->request($method, $url, $options);
+            $this->wait?->clear();
+            $response = $this->client->request($method, $url, $options);
             $status = $response->getStatusCode();
+            $this->wait?->observe($status, $response->getHeaders(false));
             if (404 === $status) {
                 return null;
             }
             $body = $response->getContent(false);
+        } catch (UsageLimitReached $e) {
+            throw Redaction::withoutArguments($e);
         } catch (ExceptionInterface $e) {
-            throw Redaction::withoutArguments(new UnreachableException(\sprintf('%s could not be reached for %s: %s', $this->provider, $what, self::reason($e->getMessage())), 0, Redaction::copy($e, Redaction::secrets($url, $options))));
+            throw Redaction::withoutArguments($this->unreachable(\sprintf('%s could not be reached for %s: %s', $this->provider, $what, Redaction::text(self::reason($e->getMessage()), $secrets)), Redaction::copy($e, $secrets)));
         }
         if ($status >= 400) {
-            throw Redaction::withoutArguments(ProviderException::answered($this->provider, $what, $status, Redaction::text($body, Redaction::secrets($url, $options))));
+            throw Redaction::withoutArguments($this->answered($what, $status, Redaction::text($body, $secrets)));
         }
         if ('' === trim($body)) {
             return new Data([]);
         }
         $data = json_decode($body, true);
 
-        return \is_array($data) ? new Data($data) : throw Redaction::withoutArguments(ProviderException::answered($this->provider, $what, $status, 'The body is not JSON.'));
+        return \is_array($data) ? $this->data($data) : throw Redaction::withoutArguments($this->answered($what, $status, 'The body is not JSON.'));
     }
 
-    /**
-     * An HTTP client's message without the addresses it quotes: Symfony's
-     * ' for "<url>"' dropped, any other address cut to its scheme, host and
-     * path (no credentials, no query, no fragment).
-     */
-    public static function reason(string $message): string
+    /** @param array<mixed> $data */
+    protected function data(array $data): Data
     {
-        $message = (string) preg_replace('~\s+for\s+"[a-z][a-z0-9+.\-]*://[^"]*"~i', '', $message);
-        $message = (string) preg_replace_callback('~[a-z][a-z0-9+.\-]*://[^\s"\'<>]+~i', static function (array $match): string {
-            $parts = parse_url($match[0]);
-            if (false === $parts || !isset($parts['scheme'], $parts['host'])) {
-                return '(an address)';
-            }
+        return new Data($data);
+    }
 
-            return $parts['scheme'].'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '').($parts['path'] ?? '');
-        }, $message);
-        $message = rtrim(trim($message), '.');
+    protected function answered(string $what, int $status, string $detail): \Throwable
+    {
+        return ProviderException::answered($this->provider, $what, $status, $detail);
+    }
 
-        return '' !== $message ? $message.'.' : 'no reason given.';
+    protected function unreachable(string $message, \Throwable $previous): \Throwable
+    {
+        return new UnreachableException($message, 0, $previous);
     }
 }

@@ -3,6 +3,19 @@
 ## Unreleased (1.x)
 
 ### Changed
+- 2026-11-10: on omnisense/contracts, the kernel every family builds on. Config, ProviderInterface,
+  ProviderFactoryInterface, ProviderFactory, Registry, Http\JsonClient, Data, Redaction,
+  Testing\RecordedHttpClient, RecordedResponse and BareTestCase keep their names and their API,
+  each a thin subclass of the kernel's (`bin/load-all.php` moved there); JsonClient still reads an
+  empty body as an empty Data. Usage policies: `Capabilities::policy()` (given, or made of the
+  older fields, now deprecated and kept as given; `toArray()` unchanged), every call through
+  `search()`, `catalogue()`, `library()`, `ownership()` guarded (Policy\Guarded*: a rate limit
+  reached, a 429 and its Retry-After, a RateLimit field with nothing left), `hosting()`,
+  `hostingFor()`, `identity()` and `identityFor()` guarded when the policy limits their calls, a
+  site's configuration tightening a policy (`policy`, `usage`), `Registry::policy()`, `policies()`,
+  `guard()`, a shared limiter as the registry's third argument,
+  Exception\UsageLimitReachedException. The harness installs omnisense/contracts from its checkout
+  (OMNISENSE_CONTRACTS) and runs its tests too. docs/policies.md.
 - One family: omnisense/omnigame merged into omnisense/omniplay on 2026-11-09, its history kept
   (the merge of omnigame's `1.x` at 6010da9). `Omnigame\` is now `Omniplay\`; `omnigame/gog`,
   `omnigame/igdb`, `omnigame/itch` and `omnigame/rawg` are `omniplay/<provider>`, and
