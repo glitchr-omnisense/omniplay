@@ -159,7 +159,9 @@ final class JsonClientTest extends TestCase
         ]);
         $json = new JsonClient($http, 'Docker');
 
-        self::assertSame([], $json->request('POST', 'http://docker/v1.44/containers/a/start')?->toArray());
+        $started = $json->request('POST', 'http://docker/v1.44/containers/a/start');
+        self::assertInstanceOf(Data::class, $started, 'omniplay\'s Data, from the kernel\'s empty body');
+        self::assertSame([], $started->toArray());
         self::assertSame('running', $json->get('http://docker/v1.44/containers/a/json')?->string('State.Status'));
         self::assertNull($json->get('http://docker/v1.44/containers/b/json'));
         try {
@@ -167,6 +169,35 @@ final class JsonClientTest extends TestCase
             self::fail('No error.');
         } catch (ProviderException $e) {
             self::assertSame('Docker answered 500 for POST /v1.44/containers/create. {"message": "no space left on device"}', $e->getMessage());
+        }
+    }
+
+    /** The kernel reads the empty body (omnisense/contracts 5bac28b): a 304 too, and omniplay's Data whatever the call. */
+    public function testA304AndAJsonAnswerAreOmniplaysData(): void
+    {
+        $http = RecordedHttpClient::routes([
+            '~^POST http://docker/v1\\.44/containers/a/stop~' => [304, ''],
+            '~^GET http://docker/v1\\.44/containers/a/json~' => [200, '{"Id": "a"}'],
+        ]);
+        $json = new JsonClient($http, 'Docker');
+
+        $stopped = $json->request('POST', 'http://docker/v1.44/containers/a/stop');
+        self::assertInstanceOf(Data::class, $stopped);
+        self::assertSame([], $stopped->toArray());
+        self::assertInstanceOf(Data::class, $json->get('http://docker/v1.44/containers/a/json'));
+    }
+
+    /** omniplay's ProviderException is the kernel's: the status as its code, status(), one catch for every family. */
+    public function testAnErrorStatusIsReadByStatus(): void
+    {
+        $json = new JsonClient(RecordedHttpClient::routes(['~/gone~' => [410, '{}']]), 'Edgegap');
+        try {
+            $json->request('DELETE', 'https://api.edgegap.com/v1/stop/gone');
+            self::fail('410');
+        } catch (\Omnisense\Contracts\Exception\ProviderException $e) {
+            self::assertInstanceOf(ProviderException::class, $e);
+            self::assertSame(410, $e->status());
+            self::assertSame(410, $e->getCode());
         }
     }
 }

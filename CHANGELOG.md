@@ -3,6 +3,10 @@
 ## Unreleased (1.x)
 
 ### Changed
+- 2026-11-10: on omnisense/contracts' round 2 (5bac28b, still `^1.0@dev`): `Http\JsonClient`'s own `request()`,
+  written for the empty body, is gone: the kernel reads an empty body (204, 304) as an empty Data, and `get()` and
+  `request()` only give omniplay's Data. `Exception\ProviderException` extends the kernel's (the status as its code,
+  `status()` beside `getCode()`, caught by a `catch` of the kernel's), its `answered()` the kernel's. Same public API.
 - 2026-11-10: on omnisense/contracts, the kernel every family builds on. Config, ProviderInterface,
   ProviderFactoryInterface, ProviderFactory, Registry, Http\JsonClient, Data, Redaction,
   Testing\RecordedHttpClient, RecordedResponse and BareTestCase keep their names and their API,
