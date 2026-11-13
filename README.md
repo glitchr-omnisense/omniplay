@@ -51,6 +51,37 @@ omnisense family builds on: provider, factory, registry, JSON client, usage poli
 and `symfony/http-client-contracts` (interfaces), nothing else; a provider that calls an API
 requires `symfony/http-client` and takes the application's client.
 
+## Install and a first call
+
+```sh
+composer require omnisense/omniplay
+```
+
+```php
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+use Omniplay\Model\Service;
+use Omniplay\Secret\FixedSecrets;
+use Omniplay\Tickets;
+
+$tickets = new Tickets(new FixedSecrets(['GAME_TICKET_SECRET' => 'a secret the game servers share']));
+$game = new Service('game', secret: 'GAME_TICKET_SECRET', ttl: 60);
+$ticket = $tickets->mint($game, 'server-1', ['sub' => 'player-7']);       // what the player presents
+var_dump($tickets->verify($game, $ticket->token, 'server-1')?->claims);   // ['sub' => 'player-7']: server-1 lets the player in
+var_dump($tickets->verify($game, $ticket->token, 'server-2'));            // NULL: another server refuses it
+```
+
+Tickets need no account and no network: the core signs and checks them alone, and a game server
+checks them the same way in its own language ([docs/tickets.md](docs/tickets.md)). The providers
+add the stores and the hosts, one package each (`composer require omniplay/steam`...): Steam's
+store, GOG's catalogue and itch.io's pages need no key; a player's Steam library and ownership need
+a Steam Web API key, the identity check a publisher key, IGDB Twitch client credentials, RAWG an
+API key, Edgegap an API token, omniplay/docker a Docker Engine's socket. The table under
+[Providers](#providers) says which. Whoever calls GOG or Steam's store should read their terms
+first: each provider's `policy.json` says what is known of them.
+
 ## Usage policies
 
 Each provider declares its usage policy as data (its `policy.json`: rate limits, rights,

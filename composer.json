@@ -15,7 +15,7 @@
         "php": ">=8.2",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "omnisense/contracts": "^1.0@dev",
+        "omnisense/contracts": "^1.0",
         "symfony/http-client-contracts": "^3.0"
     },
     "require-dev": {

@@ -167,10 +167,10 @@ Building a provider calls nothing; a missing required option is reported by `cre
 ## Online play, in plain PHP
 
 ```sh
-composer require omnisense/omniplay:1.x-dev
-composer require omniplay/docker:1.x-dev   # to start servers as Docker containers
-composer require omniplay/edgegap:1.x-dev  # to deploy servers on Edgegap, near the players
-composer require omniplay/steam:1.x-dev    # to verify players' Steam session tickets
+composer require omnisense/omniplay
+composer require omniplay/docker           # to start servers as Docker containers
+composer require omniplay/edgegap          # to deploy servers on Edgegap, near the players
+composer require omniplay/steam            # to verify players' Steam session tickets
 ```
 
 PHP 8.2 or later with `json` and `mbstring`. The core requires `symfony/http-client-contracts`
